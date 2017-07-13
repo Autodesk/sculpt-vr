@@ -10,7 +10,7 @@ Or see a [video](https://youtu.be/8FRDyrMgb6Y) of it in action.
 
 ## Requirements
 * An HTC Vive
-* Chrome experimental version (get it from [webvr.info](https://webvr.info/get-chrome/))
+* Firefox Nightly or Chrome experimental version (get it from [webvr.info](https://webvr.info/get-chrome/)) (Chrome is a bit broken lately)
 
 ## Usage
 
