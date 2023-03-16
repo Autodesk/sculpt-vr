@@ -1,0 +1,45 @@
+{
+	"name": "sculpt-vr",
+	"version": "1.0.0",
+	"description": "Inspired by programs like ZBrush and Mudbox, this is a POC of a sculpting program for WebVR.",
+	"directories": {
+		"lib": "lib"
+	},
+	"scripts": {
+		"test": "webpack --config ./bundler/webpack.common.js",
+		"dev": "webpack serve --config ./bundler/webpack.dev.js",
+		"build": "webpack --config ./bundler/webpack.prod.js"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/elifer5000/sculpt-vr.git"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/elifer5000/sculpt-vr/issues"
+	},
+	"homepage": "https://github.com/elifer5000/sculpt-vr#readme",
+	"devDependencies": {
+		"@babel/core": "^7.21.3",
+		"@babel/preset-env": "^7.20.2",
+		"babel-loader": "^9.1.2",
+		"clean-webpack-plugin": "^4.0.0",
+		"copy-webpack-plugin": "^11.0.0",
+		"css-loader": "^6.7.3",
+		"file-loader": "^6.2.0",
+		"html-loader": "^4.2.0",
+		"html-webpack-plugin": "^5.5.0",
+		"mini-css-extract-plugin": "^2.7.4",
+		"portfinder-sync": "^0.0.2",
+		"raw-loader": "^4.0.2",
+		"webpack": "^5.76.2",
+		"webpack-cli": "^5.0.1",
+		"webpack-dev-server": "^4.12.0",
+		"webpack-merge": "^5.8.0"
+	},
+	"dependencies": {
+		"three": "0.150.1"
+	}
+}
