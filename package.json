@@ -7,7 +7,7 @@
 	},
 	"scripts": {
 		"test": "webpack --config ./bundler/webpack.common.js",
-		"dev": "webpack serve --config ./bundler/webpack.dev.js",
+		"dev": "cross-env SSL_CRT_FILE=.cert/cert.pem SSL_KEY_FILE=.cert/key.pem webpack serve --config ./bundler/webpack.dev.js",
 		"build": "webpack --config ./bundler/webpack.prod.js"
 	},
 	"repository": {
@@ -27,6 +27,7 @@
 		"babel-loader": "^9.1.2",
 		"clean-webpack-plugin": "^4.0.0",
 		"copy-webpack-plugin": "^11.0.0",
+		"cross-env": "^7.0.3",
 		"css-loader": "^6.7.3",
 		"file-loader": "^6.2.0",
 		"html-loader": "^4.2.0",

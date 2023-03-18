@@ -1,7 +1,7 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>SculptVR - htc vive</title>
+		<title>SculptVR</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 		<style>
@@ -19,16 +19,24 @@
 	</head>
 	<body>
 
-		<script src="lib/three.js"></script>
-
-		<script src="lib/WebVR.js"></script>
-		<script src="lib/OrbitControls.js"></script>
+		<script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js" crossorigin="anonymous"></script>
+		<script type="importmap">
+			{
+			  "imports": {
+				"three": "https://cdn.skypack.dev/pin/three@v0.150.0-OzKE9j8uVtfQ1iuz7xon/mode=raw/build/three.module.js",
+				"three/addons/": "https://cdn.skypack.dev/pin/three@v0.150.0-OzKE9j8uVtfQ1iuz7xon/mode=raw/examples/jsm"
+			  }
+			}
+		</script>
+		<!-- <script src="lib/OrbitControls.js"></script>
 		<script src="lib/ViveController.js"></script>
 
-		<script src="lib/OBJLoader.js"></script>
+		<script src="lib/OBJLoader.js"></script> -->
 
-		<script>
-
+		<script type="module">
+			import * as THREE from 'three';
+			// import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+			// import { VRButton } from 'three/addons/webxr/VRButton.js';
 
 			/** DentModifier allows us to make local spherical deformation
 			 * The geometry has to have rather large number of polygons!
@@ -40,56 +48,7 @@
 			 * Based on work by Vildanov Almaz / alvild@gmail.com
 			 */
 
-			THREE.DentModifier = function () {
-			};
-
-			THREE.DentModifier.prototype = {
-
-				constructor: THREE.DentModifier,
-
-				set: function ( origin, direction, radius, depth ) {
-					this.origin = new THREE.Vector3(); this.origin.copy( origin );
-					this.direction = new THREE.Vector3(); this.direction.copy( direction );
-					this.radius = radius;
-					this.depth = depth;
-					return this;
-				},
-
-				modify: function ( geometry ) {
-
-					var R_Squared = this.radius * this.radius;
-
-					var normal = new THREE.Vector3(); normal.copy( this.direction );
-					normal.multiplyScalar( -this.radius*( 1 - this.depth ) );
-
-					var centerSphere = new THREE.Vector3(); centerSphere.addVectors( this.origin, normal );
-					var Sphere = new THREE.Sphere( centerSphere, this.radius );
-
-					var positions = geometry.vertices;
-
-					var modified = false;
-					for ( var i = 0; i < positions.length; i++ ) {
-						var vertex = positions[i];
-						if ( centerSphere.distanceToSquared( vertex ) < R_Squared ) {
-							var Ray = new THREE.Ray( vertex, this.direction );
-							var punct = Ray.intersectSphere( Sphere );
-							positions[i].set(punct.x, punct.y, punct.z);
-							modified = true;
-						}
-					}
-
-					if (!modified) return;
-
-//					console.log('modified');
-
-					geometry.computeVertexNormals();
-					geometry.verticesNeedUpdate = true;
-
-					return this;
-				}
-			};
-
-			var hasVR = WEBVR.isAvailable();
+			
 
 			var container;
 			var camera, scene, renderer;
@@ -182,8 +141,10 @@
 				renderer.sortObjects = false;
 				container.appendChild( renderer.domElement );
 
-                renderer.vr.enabled = true;
-                renderer.vr.standing = true;
+				// Add VR button
+				document.body.appendChild( VRButton.createButton( renderer ) );
+
+                renderer.xr.enabled = true;
 
 				if (hasVR) {
 					// controllers
@@ -223,14 +184,9 @@
 					document.addEventListener( 'mousemove', onMouseMove, false );
 				}
 
-                WEBVR.getVRDisplay(function ( display ) {
-                    renderer.vr.setDevice( display );
-                    document.body.appendChild( WEBVR.getButton( display, renderer.domElement ) );
-                } );
-
 				window.addEventListener( 'resize', onWindowResize, false );
 
-				dentModifier = new THREE.DentModifier();
+				dentModifier = new DentModifier();
 			}
 
 			function onWindowResize() {
