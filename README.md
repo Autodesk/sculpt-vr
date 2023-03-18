@@ -4,7 +4,7 @@ Inspired by programs like ZBrush and Mudbox, this is a POC of a sculpting progra
 
 <img src="./images/sculptvr.png">
 
-Try it [here](https://autodesk.github.io/sculpt-vr/)
+Try it [here](https://elifer5000.github.io/sculpt-vr/dist/index.html)
 
 Or see a [video](https://youtu.be/8FRDyrMgb6Y) of it in action.
 
