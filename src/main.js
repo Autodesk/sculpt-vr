@@ -1,7 +1,8 @@
 import './style.css';
 import * as THREE from 'three';
-import { VRButton } from 'three/addons/webxr/VRButton.js';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { VRButton } from 'three/addons/webxr/VRButton';
+import { OrbitControls } from 'three/addons/controls/OrbitControls';
+import { XRControllerModelFactory } from 'three/addons/webxr/XRControllerModelFactory';
 import DentModifier from './DentModifier';
 import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils';
 
@@ -11,7 +12,9 @@ var animate;
 var container;
 var camera, scene, renderer;
 var controller1, controller2;
-
+var controllerGrip1, controllerGrip2;
+var controllerModelFactory;
+var controllers = [];
 
 var raycaster = new THREE.Raycaster();
 var mouse = new THREE.Vector2();
@@ -24,7 +27,7 @@ var sphereTool, surface;
 // Parameters
 var toolFactor = 0.6;
 var bodyRadius = 0.5;
-var toolRadius = 0.1 * toolFactor;
+var toolRadius = 0.1;
 var direction = 1;
 var surfaceCenter = new THREE.Vector3(0, bodyRadius + 0.9, 0);
 
@@ -35,11 +38,11 @@ function createTool() {
 	var sphereMaterial = new THREE.MeshBasicMaterial({color: 0x00FF00, opacity: 0.5, transparent: true});
 	sphereTool = new THREE.Mesh(sphereToolGeo, sphereMaterial);
 	sphereTool.scale.set(toolFactor, toolFactor, toolFactor);
-//				scene.add(sphereTool);
+	scene.add(sphereTool);
 }
 
 function createSurfaceMesh() {
-	var geometry = new THREE.IcosahedronGeometry(bodyRadius, 63);
+	var geometry = new THREE.IcosahedronGeometry(bodyRadius, 64);
 	var material = new THREE.MeshStandardMaterial( { wireframe: false, color:0x484F52, side: THREE.DoubleSide, metalness: 0.4});
 	
 //				mesh.position.add(surfaceCenter);
@@ -64,10 +67,10 @@ function init() {
 	scene = new THREE.Scene();
 
 	// if (isVRActive) {
-		camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+		// camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
 	// } else {
-	// 	camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 1000);
-	// 	camera.position.set( 0, 4, 5);
+		camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 1000);
+		camera.position.set( 0, 4, 5);
 	// }
 
 	surface = createSurfaceMesh();
@@ -106,47 +109,109 @@ function init() {
 
 	renderer.xr.enabled = true;
 
-	if (isVRActive) {
-		// controllers
-		// controller1 = new THREE.ViveController( 0 );
-		// controller1.standingMatrix = renderer.vr.getStandingMatrix();
-		// controller1.addEventListener( 'thumbpaddown', onThumbpadDown );
-		// controller1.addEventListener( 'thumbpadup', onThumbpadUp );
-		// controller1.addEventListener( 'axischanged', onAxisChanged );
-		// scene.add( controller1 );
-
-		// controller2 = new THREE.ViveController( 1 );
-		// controller2.standingMatrix = renderer.vr.getStandingMatrix();
-		// scene.add( controller2 );
-
-		// var loader = new THREE.OBJLoader();
-		// loader.setPath( 'models/' );
-		// loader.load( 'vr_controller_vive_1_5.obj', function ( object ) {
-		// 	var loader = new THREE.TextureLoader();
-		// 	loader.setPath( 'models/' );
-
-		// 	var controller = object.children[ 0 ];
-		// 	controller.material.map = loader.load( 'onepointfive_texture.png' );
-		// 	controller.material.specularMap = loader.load( 'onepointfive_spec.png' );
-		// 	controller.material.transparent = true;
-		// 	controller.material.opacity = 0.3;
-		// 	controller1.add( object.clone() );
-		// 	controller2.add( object.clone() );
-
-		// 	controller1.add(sphereTool);
-		// });
-	} else {
+	// if (true) {
+		initControllers();
+	// } else {
 		controls = new OrbitControls(camera, renderer.domElement);
 		controls.target.set(0, 0, 0);
 
 		document.addEventListener( 'mousedown', onMouseDown, false );
 		document.addEventListener( 'mouseup', onMouseUp, false );
 		document.addEventListener( 'mousemove', onMouseMove, false );
-	}
+	// }
 
 	window.addEventListener( 'resize', onWindowResize, false );
 
 	dentModifier = new DentModifier();
+}
+
+function controllerConnected( evt ) {
+
+	controllers.push( {
+		gamepad: evt.data.gamepad,
+		grip: evt.target,
+	} );
+
+}
+
+function controllerDisconnected( evt ) {
+
+	const index = controllers.findIndex( o => o.controller === evt.target );
+	if ( index !== - 1 ) {
+
+		controllers.splice( index, 1 );
+
+	}
+
+}
+
+function initControllers() {
+	function onSelectStart() {
+		this.userData.isSelecting = true;
+	}
+
+	function onSelectEnd() {
+		this.userData.isSelecting = false;
+	}
+
+	controller1 = renderer.xr.getController( 0 );
+	controller1.addEventListener( 'selectstart', onSelectStart );
+	controller1.addEventListener( 'selectend', onSelectEnd );
+	controller1.addEventListener( 'squeezestart', onSqueezeStart );
+	// controller1.addEventListener( 'squeezeend', onSqueezeEnd );
+	controller1.addEventListener( 'connected', (e) => {
+		controller1.gamepad = e.data.gamepad
+	});
+	controller1.userData.id = 0;
+	scene.add( controller1 );
+
+	// controller2 = renderer.xr.getController( 1 );
+	// controller2.addEventListener( 'selectstart', onSelectStart );
+	// controller2.addEventListener( 'selectend', onSelectEnd );
+	// controller2.userData.id = 1;
+	// scene.add( controller2 );
+
+	controllerModelFactory = new XRControllerModelFactory();
+
+	controllerGrip1 = renderer.xr.getControllerGrip( 0 );
+	controllerGrip1.add( controllerModelFactory.createControllerModel( controllerGrip1 ) );
+	scene.add( controllerGrip1 );
+
+	
+	// controllerGrip2 = renderer.xr.getControllerGrip( 1 );
+	// controllerGrip2.addEventListener( 'connected', controllerConnected );
+	// controllerGrip2.addEventListener( 'disconnected', controllerDisconnected );
+	// controllerGrip2.add( controllerModelFactory.createControllerModel( controllerGrip2 ) );
+	// scene.add( controllerGrip2 );
+
+	// controllers
+	// controller1 = new THREE.ViveController( 0 );
+	// controller1.standingMatrix = renderer.vr.getStandingMatrix();
+	// controller1.addEventListener( 'thumbpaddown', onThumbpadDown );
+	// controller1.addEventListener( 'thumbpadup', onThumbpadUp );
+	// controller1.addEventListener( 'axischanged', onAxisChanged );
+	// scene.add( controller1 );
+
+	// controller2 = new THREE.ViveController( 1 );
+	// controller2.standingMatrix = renderer.vr.getStandingMatrix();
+	// scene.add( controller2 );
+
+	// var loader = new THREE.OBJLoader();
+	// loader.setPath( 'models/' );
+	// loader.load( 'vr_controller_vive_1_5.obj', function ( object ) {
+	// 	var loader = new THREE.TextureLoader();
+	// 	loader.setPath( 'models/' );
+
+	// 	var controller = object.children[ 0 ];
+	// 	controller.material.map = loader.load( 'onepointfive_texture.png' );
+	// 	controller.material.specularMap = loader.load( 'onepointfive_spec.png' );
+	// 	controller.material.transparent = true;
+	// 	controller.material.opacity = 0.3;
+	// 	controller1.add( object.clone() );
+	// 	controller2.add( object.clone() );
+
+	// 	controller1.add(sphereTool);
+	// });
 }
 
 function onWindowResize() {
@@ -181,6 +246,15 @@ function onMouseDown(event) {
 	}
 }
 
+function onSqueezeStart() {
+	direction = -direction;
+	if (direction > 0) {
+		sphereTool.material.color.setHex(0x00FF00);
+	} else {
+		sphereTool.material.color.setHex(0x0000FF);
+	}
+}
+
 var thumbPadPressed = false;
 function onThumbpadDown( event ) {
 	thumbPadPressed = true;
@@ -197,16 +271,16 @@ function onAxisChanged( event ) {
 
 	var axes = event.axes;
 
-	if (axes[1] > 0.5) {
-		direction = 1;
-	} else if (axes[1] < -0.5) {
-		direction = -1;
-	}
-	if (direction > 0) {
-		sphereTool.material.color.setHex(0x00FF00);
-	} else {
-		sphereTool.material.color.setHex(0x0000FF);
-	}
+	// if (axes[1] > 0.5) {
+	// 	direction = 1;
+	// } else if (axes[1] < -0.5) {
+	// 	direction = -1;
+	// }
+	// if (direction > 0) {
+	// 	sphereTool.material.color.setHex(0x00FF00);
+	// } else {
+	// 	sphereTool.material.color.setHex(0x0000FF);
+	// }
 
 	if (axes[0] > 0.5) {
 		toolFactor += 0.01;
@@ -221,34 +295,66 @@ function onAxisChanged( event ) {
 }
 
 var controlPos = new THREE.Vector3();
-function handleController( controller, id ) {
-	controller.update();
+var symControlPos = new THREE.Vector3();
+function handleController( controller ) {
+	const matrix = controller.matrixWorld;
 
-	if (id !== 0) return;
+	const { gamepad } = controller;
+	//gamepad.buttons, gamepad.axes  // axes to change size,
+	const { axes } = gamepad;
+	if (axes[3] > 0.5) {
+		toolFactor += 0.01;
+	} else if (axes[3] < -0.5) {
+		toolFactor -= 0.01;
+	}
 
-	if (controller.getButtonState('trigger')) {
-//                    var controlPos = controller.position.clone();
-//					controlPos.applyMatrix4(controller.standingMatrix);
-		controlPos.setFromMatrixPosition(sphereTool.matrixWorld);
+	if (toolFactor > 2) toolFactor = 2;
+	if (toolFactor < 0.1) toolFactor = 0.1;
+
+	sphereTool.scale.set(toolFactor, toolFactor, toolFactor);
+
+	const supportHaptic = 'hapticActuators' in gamepad && gamepad.hapticActuators != null && gamepad.hapticActuators.length > 0;
+
+	sphereTool.position.setFromMatrixPosition( matrix );
+
+	if ( controller.userData.isSelecting ) {
+		controlPos.setFromMatrixPosition(matrix);
 
 		var toCenter = controlPos.clone().sub(surfaceCenter).multiplyScalar(-direction).normalize();
-		dentModifier.set(controlPos, toCenter, toolRadius * toolFactor, direction > 0 ? 1 : 0).modify(surface.geometry);
+		let modified = dentModifier.set(controlPos, toCenter, toolRadius * toolFactor, direction > 0 ? 1 : 0).modify(surface.geometry);
 
 		if (symmetry) {
-			var symControlPos = controlPos.clone();
+			symControlPos.copy(controlPos);
 			symControlPos.x = -symControlPos.x;
 			var toCenterSym = symControlPos.clone().sub(surfaceCenter).multiplyScalar(-direction).normalize();
 			dentModifier.set(symControlPos, toCenterSym, toolRadius * toolFactor, direction > 0 ? 1 : 0).modify(surface.geometry);
+		}
+
+		if ( modified && supportHaptic ) {
+			gamepad.hapticActuators[ 0 ].pulse( intensity, 100 );
 		}
 	}
 }
 
 var symmetry = true;
+var wasPresenting = false;
 function render() {
 	isVRActive = renderer.xr.isPresenting;
+	if (wasPresenting !== isVRActive) { // Got switched
+		if (isVRActive) {
+			// camera.position.set(0, 0, 2);
+			camera.far = 20;
+			sphereTool.visible = true;
+		} else {
+			camera.far = 1000;
+		}
+	}
 	if (isVRActive) {
-		// handleController( controller1, 0 );
-		// handleController( controller2, 1 );
+		if (!controller1) {
+			initControllers();
+		}
+		handleController( controller1 );
+		// handleController( controller2 );
 	} else {
 		controls.update();
 
@@ -263,7 +369,7 @@ function render() {
 
 			if (isCarving) {
 				var toCenter = intersectPnt.clone().sub(surfaceCenter).multiplyScalar(force).normalize();
-				dentModifier.set(intersectPnt, toCenter, toolRadius, 1).modify(intersects[0].object.geometry);
+				dentModifier.set(intersectPnt, toCenter, toolRadius * toolFactor, 1).modify(intersects[0].object.geometry);
 			}
 		} else {
 			sphereTool.visible = false;
@@ -271,6 +377,8 @@ function render() {
 	}
 
 	renderer.render( scene, camera );
+
+	wasPresenting = isVRActive;
 }
 
 renderer.setAnimationLoop(render);
