@@ -49,12 +49,12 @@ export default class DentModifier {
             }
         }
 
-        if (!modified) return;
+        if (modified) {
+            //console.log('modified');
+            geometry.attributes.position.needsUpdate = true;
+            geometry.computeVertexNormals();
+        }
 
-        //console.log('modified');
-        geometry.attributes.position.needsUpdate = true;
-        geometry.computeVertexNormals();
-
-        return this;
+        return modified;
     }
 };
