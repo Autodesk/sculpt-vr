@@ -144,17 +144,24 @@ function initControllers() {
 	controller1.userData.id = 0;
 	scene.add( controller1 );
 
-	// controller2 = renderer.xr.getController( 1 );
-	// controller2.addEventListener( 'selectstart', onSelectStart );
-	// controller2.addEventListener( 'selectend', onSelectEnd );
-	// controller2.userData.id = 1;
-	// scene.add( controller2 );
+	controller2 = renderer.xr.getController( 1 );
+	controller2.addEventListener( 'selectstart', onSelectStart );
+	controller2.addEventListener( 'selectend', onSelectEnd );
+	controller2.addEventListener( 'connected', (e) => {
+		controller2.gamepad = e.data.gamepad
+	});
+	controller2.userData.id = 1;
+	scene.add( controller2 );
 
 	controllerModelFactory = new XRControllerModelFactory();
 
 	controllerGrip1 = renderer.xr.getControllerGrip( 0 );
 	controllerGrip1.add( controllerModelFactory.createControllerModel( controllerGrip1 ) );
 	scene.add( controllerGrip1 );
+
+	controllerGrip2 = renderer.xr.getControllerGrip( 1 );
+	controllerGrip2.add( controllerModelFactory.createControllerModel( controllerGrip2 ) );
+	scene.add( controllerGrip2 );
 }
 
 function onWindowResize() {
@@ -204,19 +211,22 @@ function handleController( controller ) {
 	const matrix = controller.matrixWorld;
 
 	const { gamepad } = controller;
-	const { axes } = gamepad;
-	if (axes[3] > 0.5) {
-		toolFactor += 0.01;
-	} else if (axes[3] < -0.5) {
-		toolFactor -= 0.01;
+	let supportHaptic = false;
+	if (gamepad) {
+		const { axes } = gamepad;
+		if (axes[3] > 0.5) {
+			toolFactor += 0.01;
+		} else if (axes[3] < -0.5) {
+			toolFactor -= 0.01;
+		}
+
+		if (toolFactor > 2) toolFactor = 2;
+		if (toolFactor < 0.1) toolFactor = 0.1;
+
+		sphereTool.scale.set(toolFactor, toolFactor, toolFactor);
+
+		supportHaptic = 'hapticActuators' in gamepad && gamepad.hapticActuators != null && gamepad.hapticActuators.length > 0;
 	}
-
-	if (toolFactor > 2) toolFactor = 2;
-	if (toolFactor < 0.1) toolFactor = 0.1;
-
-	sphereTool.scale.set(toolFactor, toolFactor, toolFactor);
-
-	const supportHaptic = 'hapticActuators' in gamepad && gamepad.hapticActuators != null && gamepad.hapticActuators.length > 0;
 
 	sphereTool.position.setFromMatrixPosition( matrix );
 
@@ -234,7 +244,7 @@ function handleController( controller ) {
 		}
 
 		if ( modified && supportHaptic ) {
-			gamepad.hapticActuators[ 0 ].pulse( intensity, 100 );
+			gamepad.hapticActuators[ 0 ].pulse( 0.8, 100 );
 		}
 	}
 }
@@ -257,7 +267,7 @@ function render() {
 			initControllers();
 		}
 		handleController( controller1 );
-		// handleController( controller2 );
+		handleController( controller2 );
 	} else {
 		controls.update();
 
