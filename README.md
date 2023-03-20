@@ -9,8 +9,7 @@ Try it [here](https://elifer5000.github.io/sculpt-vr/dist/index.html)
 Or see a [video](https://youtu.be/8FRDyrMgb6Y) of it in action.
 
 ## Requirements
-* An HTC Vive
-* Firefox Nightly or Chrome experimental version (get it from [webvr.info](https://webvr.info/get-chrome/)) (Chrome is a bit broken lately)
+* A compatible VR headset (tested on Oculus Quest 2)
 
 ## Usage
 
