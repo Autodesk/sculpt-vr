@@ -64,4 +64,5 @@ crashlytics-build.properties
 dist/*
 node_modules/*
 
-# SSL.cert/
+# SSL
+.cert/
