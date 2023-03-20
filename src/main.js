@@ -14,7 +14,6 @@ var camera, scene, renderer;
 var controller1, controller2;
 var controllerGrip1, controllerGrip2;
 var controllerModelFactory;
-var controllers = [];
 
 var raycaster = new THREE.Raycaster();
 var mouse = new THREE.Vector2();
@@ -125,26 +124,6 @@ function init() {
 	dentModifier = new DentModifier();
 }
 
-function controllerConnected( evt ) {
-
-	controllers.push( {
-		gamepad: evt.data.gamepad,
-		grip: evt.target,
-	} );
-
-}
-
-function controllerDisconnected( evt ) {
-
-	const index = controllers.findIndex( o => o.controller === evt.target );
-	if ( index !== - 1 ) {
-
-		controllers.splice( index, 1 );
-
-	}
-
-}
-
 function initControllers() {
 	function onSelectStart() {
 		this.userData.isSelecting = true;
@@ -176,42 +155,6 @@ function initControllers() {
 	controllerGrip1 = renderer.xr.getControllerGrip( 0 );
 	controllerGrip1.add( controllerModelFactory.createControllerModel( controllerGrip1 ) );
 	scene.add( controllerGrip1 );
-
-	
-	// controllerGrip2 = renderer.xr.getControllerGrip( 1 );
-	// controllerGrip2.addEventListener( 'connected', controllerConnected );
-	// controllerGrip2.addEventListener( 'disconnected', controllerDisconnected );
-	// controllerGrip2.add( controllerModelFactory.createControllerModel( controllerGrip2 ) );
-	// scene.add( controllerGrip2 );
-
-	// controllers
-	// controller1 = new THREE.ViveController( 0 );
-	// controller1.standingMatrix = renderer.vr.getStandingMatrix();
-	// controller1.addEventListener( 'thumbpaddown', onThumbpadDown );
-	// controller1.addEventListener( 'thumbpadup', onThumbpadUp );
-	// controller1.addEventListener( 'axischanged', onAxisChanged );
-	// scene.add( controller1 );
-
-	// controller2 = new THREE.ViveController( 1 );
-	// controller2.standingMatrix = renderer.vr.getStandingMatrix();
-	// scene.add( controller2 );
-
-	// var loader = new THREE.OBJLoader();
-	// loader.setPath( 'models/' );
-	// loader.load( 'vr_controller_vive_1_5.obj', function ( object ) {
-	// 	var loader = new THREE.TextureLoader();
-	// 	loader.setPath( 'models/' );
-
-	// 	var controller = object.children[ 0 ];
-	// 	controller.material.map = loader.load( 'onepointfive_texture.png' );
-	// 	controller.material.specularMap = loader.load( 'onepointfive_spec.png' );
-	// 	controller.material.transparent = true;
-	// 	controller.material.opacity = 0.3;
-	// 	controller1.add( object.clone() );
-	// 	controller2.add( object.clone() );
-
-	// 	controller1.add(sphereTool);
-	// });
 }
 
 function onWindowResize() {
@@ -255,52 +198,12 @@ function onSqueezeStart() {
 	}
 }
 
-var thumbPadPressed = false;
-function onThumbpadDown( event ) {
-	thumbPadPressed = true;
-}
-
-function onThumbpadUp( event ) {
-	thumbPadPressed = false;
-}
-
-function onAxisChanged( event ) {
-	if (!thumbPadPressed) {
-		return;
-	}
-
-	var axes = event.axes;
-
-	// if (axes[1] > 0.5) {
-	// 	direction = 1;
-	// } else if (axes[1] < -0.5) {
-	// 	direction = -1;
-	// }
-	// if (direction > 0) {
-	// 	sphereTool.material.color.setHex(0x00FF00);
-	// } else {
-	// 	sphereTool.material.color.setHex(0x0000FF);
-	// }
-
-	if (axes[0] > 0.5) {
-		toolFactor += 0.01;
-	} else if (axes[0] < -0.5) {
-		toolFactor -= 0.01;
-	}
-
-	if (toolFactor > 2) toolFactor = 2;
-	if (toolFactor < 0.1) toolFactor = 0.1;
-
-	sphereTool.scale.set(toolFactor, toolFactor, toolFactor);
-}
-
 var controlPos = new THREE.Vector3();
 var symControlPos = new THREE.Vector3();
 function handleController( controller ) {
 	const matrix = controller.matrixWorld;
 
 	const { gamepad } = controller;
-	//gamepad.buttons, gamepad.axes  // axes to change size,
 	const { axes } = gamepad;
 	if (axes[3] > 0.5) {
 		toolFactor += 0.01;
